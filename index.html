@@ -25,6 +25,7 @@ SOFTWARE.
 <html lang="zh-CN">
 <head>
   <meta charset="utf-8">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-C4HTcrapgaJ+M1ndJf2jNG9ECDTMJCd7oYqIRMFXldU=' 'sha256-vsm13rjsjqZHKtyfCuxY2KwtwBMm4eVbZC8hBitx1Cs=' 'sha256-ISsSawPClh8fYRUlU41n9kQuZc63mIxfoswAIT+Lm8k=' 'sha256-tIfOXZ2K2gs7jffBnJgrp1OaHTwMxTeogZOMYxj4/Fg=' 'sha256-imNmN2F/diRCkWI4DK/tjd9xmjMDy97NR2fGHSH/gI0='; style-src 'unsafe-inline'; img-src data:; connect-src https://sudoku-studio-sync.jiangxiuteng125.workers.dev; base-uri 'none'; form-action 'none'">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="theme-color" content="#f7f7fc">
   <meta name="description" content="免费中文数独，四档难度、48 个关卡，支持候选数字笔记与自动存档。">
@@ -56,6 +57,7 @@ h1, h2, p { margin: 0; }
 .shell { width: min(1088px, calc(100% - 56px)); margin-inline: auto; }
 .site-header { background: #fff; border-bottom: 1px solid var(--line); }
 .header-inner { height: 70px; display: flex; align-items: center; justify-content: space-between; }
+.header-actions { display: flex; align-items: center; gap: 8px; }
 .brand { display: flex; align-items: center; gap: 12px; font-size: 1.19rem; font-weight: 750; letter-spacing: -.025em; }
 .brand-mark { flex: none; width: 37px; height: 37px; border-radius: 11px; background: linear-gradient(145deg, #8c6df3, #5b3bc5); padding: 9px; display: grid; grid-template-columns: repeat(2, 1fr); gap: 3px; }
 .brand-mark i { border-radius: 2px; background: #fff; }
@@ -189,6 +191,19 @@ dialog::backdrop { background: #211a3b72; }
 .dialog-body p, .dialog-body li { color: #51536a; line-height: 1.6; }
 .dialog-body ul { padding-left: 20px; margin: 10px 0 0; }
 .dialog-body input { width: 100%; margin-top: 10px; border-radius: 7px; border: 1px solid var(--line); padding: 8px; font: inherit; }
+.save-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 14px; }
+.save-preference { display: grid; gap: 8px; margin: 12px 0 0; padding: 12px; border: 1px solid var(--line); border-radius: 8px; }
+.save-preference label { display: flex; align-items: center; gap: 7px; font-size: .875rem; }
+.save-preference input { width: auto; margin: 0; accent-color: var(--accent); }
+.cloud-button { color: var(--accent-dark); }
+.cloud-button[data-attention="true"] { border-color: #b07b42; color: #82551e; }
+.auth-form { display: grid; gap: 11px; margin-top: 14px; }
+.auth-form label { display: grid; gap: 5px; color: #45465d; font-size: .875rem; font-weight: 650; }
+.auth-form input { margin: 0; }
+.auth-form .auth-migrate { display: flex; gap: 8px; align-items: center; font-weight: 500; }
+.auth-form .auth-migrate input { width: auto; accent-color: var(--accent); }
+.auth-form .auth-error { min-height: 1.45em; color: #a12549; font-size: .84rem; }
+.auth-form .auth-buttons { display: flex; flex-wrap: wrap; gap: 8px; }
 .dialog-actions { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 8px; margin-top: 20px; }
 .primary, .primary:hover { background: #6546cd; color: #fff; border-color: #6546cd; }
 .primary:hover { background: #5334b8; }
@@ -217,7 +232,13 @@ dialog::backdrop { background: #211a3b72; }
 }
 @media (max-width: 385px) {
   .shell { width: calc(100% - 20px); }
-  .brand { font-size: 1.05rem; }
+  .brand { font-size: 1rem; gap: 7px; }
+  .brand-mark { width: 31px; height: 31px; padding: 7px; }
+  .header-actions { gap: 5px; }
+  .header-actions .button { padding-inline: 6px; }
+  .header-actions .icon { display: none; }
+  .header-actions .share span:last-child { font-size: 0; }
+  .header-actions .share span:last-child::after { content: "分享"; font-size: .875rem; }
   .game, .tools, .levels { padding-inline: 9px; }
   .pad { gap: 3px; }
 }
@@ -228,7 +249,11 @@ dialog::backdrop { background: #211a3b72; }
   <header class="site-header">
     <div class="shell header-inner">
       <div class="brand"><span class="brand-mark" aria-hidden="true"><i></i><i></i><i></i><i></i></span>数独练习室</div>
-      <button class="button share" id="share" type="button"><span class="icon icon-link" aria-hidden="true"></span><span>分享游戏</span></button>
+      <div class="header-actions">
+        <button class="button" id="manage-saves" type="button">存档管理</button>
+        <button class="button cloud-button" id="cloud-account" type="button" hidden>云存档</button>
+        <button class="button share" id="share" type="button"><span class="icon icon-link" aria-hidden="true"></span><span>分享游戏</span></button>
+      </div>
     </div>
   </header>
   <main class="shell main">
@@ -293,10 +318,11 @@ dialog::backdrop { background: #211a3b72; }
         </div>
       </section>
     </div>
-    <p class="local-info"><span class="icon icon-device" aria-hidden="true"></span>存档保存在当前浏览器，回来即可继续。</p>
+    <p class="local-info"><span class="icon icon-device" aria-hidden="true"></span>本机自动保存。换设备时可通过存档管理转移进度。</p>
   </main>
 
   <div id="notice" class="notice" role="status" aria-live="polite"></div>
+  <input id="save-file" type="file" accept=".json,application/json" hidden>
 
   <dialog id="dialog" aria-labelledby="dialog-title">
     <div class="dialog-body">
@@ -549,10 +575,15 @@ let solution;
 let current;
 let selected;
 let clockStart = null;
+let saveAccount = '';
+
+function gameStorageKey(key) {
+  return saveAccount ? prefix + 'account:' + saveAccount + ':' + key.slice(prefix.length) : key;
+}
 
 function read(key) {
   try {
-    const found = localStorage.getItem(key);
+    const found = localStorage.getItem(gameStorageKey(key));
     return found ? JSON.parse(found) : null;
   } catch {
     return null;
@@ -561,13 +592,14 @@ function read(key) {
 
 function write(key, value) {
   try {
-    localStorage.setItem(key, JSON.stringify(value));
+    localStorage.setItem(gameStorageKey(key), JSON.stringify(value));
     storageFailed = false;
   } catch {
     storageFailed = true;
   }
   byId('save-status').dataset.failed = String(storageFailed);
   byId('save-label').textContent = storageFailed ? '当前浏览器无法保存' : '进度自动保存';
+  if (!storageFailed) window.SudokuCloud?.queue(key);
 }
 
 function validTime(value) {
@@ -578,8 +610,8 @@ function validLevel(tier, level) {
   return difficulties.includes(tier) && Number.isInteger(level) && level >= 0 && level < levels[tier].length;
 }
 
-function startState(saved) {
-  const values = givens.map((n, i) => {
+function startState(saved, clueDigits = givens, answerDigits = solution) {
+  const values = clueDigits.map((n, i) => {
     const value = saved?.values?.[i];
     return n || (Number.isInteger(value) && value >= 0 && value <= 9 ? value : 0);
   });
@@ -590,12 +622,12 @@ function startState(saved) {
   const history = Array.isArray(saved?.history) ? saved.history.slice(-150).filter(move =>
     Array.isArray(move) && move.length > 0 && move.every(change =>
       Array.isArray(change) && change.length === 3 && change.every(Number.isInteger) &&
-      change[0] >= 0 && change[0] < 81 && !givens[change[0]] &&
+      change[0] >= 0 && change[0] < 81 && !clueDigits[change[0]] &&
       change[1] >= 0 && change[1] <= 9 && change[2] >= 0 && change[2] <= 511
     )
   ) : [];
   const elapsed = validTime(saved?.elapsed) ? saved.elapsed : 0;
-  const solved = values.every((n, i) => n === solution[i]);
+  const solved = values.every((n, i) => n === answerDigits[i]);
   return {
     values,
     notes,
@@ -627,8 +659,12 @@ function stopClock() {
   clockStart = null;
 }
 
+function currentSnapshot() {
+  return { ...current, elapsed: elapsed(), selected };
+}
+
 function save() {
-  write(levelKey(tier, level), { ...current, elapsed: elapsed(), selected });
+  write(levelKey(tier, level), currentSnapshot());
 }
 
 function showTime() {
@@ -647,14 +683,19 @@ function selectLevel(nextTier, nextLevel, persistPrevious = true) {
   const [puzzle, answer] = levels[tier][level];
   givens = Array.from(puzzle, Number);
   solution = Array.from(answer, Number);
-  const saved = read(levelKey(tier, level));
-  current = startState(saved);
-  selected = Number.isInteger(saved?.selected) && saved.selected >= 0 && saved.selected < 81 ? saved.selected : -1;
+  restoreBoard();
   write(activeKey, { tier, level });
-  resumeClock();
   byId('difficulty-pill').textContent = difficultyNames[tier];
   byId('game-title').textContent = '第 ' + numberLabel(level) + ' 关';
   render();
+}
+
+function restoreBoard() {
+  const saved = read(levelKey(tier, level));
+  clockStart = null;
+  current = startState(saved);
+  selected = Number.isInteger(saved?.selected) && saved.selected >= 0 && saved.selected < 81 ? saved.selected : -1;
+  resumeClock();
 }
 
 function numberLabel(index) {
@@ -1032,24 +1073,680 @@ window.addEventListener('pagehide', () => {
 });
 window.addEventListener('pageshow', () => resumeClock());
 window.addEventListener('storage', event => {
-  if (event.key === levelKey(tier, level) && event.newValue) {
-    const saved = read(event.key);
-    stopClock();
-    current = startState(saved);
-    resumeClock();
+  if (event.key === gameStorageKey(levelKey(tier, level)) && event.newValue) {
+    restoreBoard();
     render();
-  } else if (event.key?.startsWith(prefix + browsingTier + ':')) {
+  } else if (event.key?.startsWith(gameStorageKey(prefix + browsingTier + ':'))) {
     renderLevels();
   }
 });
 
-const previous = read(activeKey);
-if (validLevel(previous?.tier, previous?.level)) {
-  selectLevel(previous.tier, previous.level, false);
-} else {
-  selectLevel('easy', 0, false);
+function restoreGame() {
+  const previous = read(activeKey);
+  if (validLevel(previous?.tier, previous?.level)) {
+    selectLevel(previous.tier, previous.level, false);
+  } else {
+    selectLevel('easy', 0, false);
+  }
 }
+
+restoreGame();
 setInterval(showTime, 250);
+
+</script>
+<script>
+'use strict';
+
+const saveFormat = 'sudoku-studio';
+const saveVersion = 1;
+const saveFileInput = byId('save-file');
+const saveLimit = 2 * 1024 * 1024;
+
+function hasBoardProgress(save) {
+  return save?.started === true || save?.notesMode === true;
+}
+
+function levelSnapshot(targetTier, targetLevel) {
+  return targetTier === tier && targetLevel === level
+    ? currentSnapshot()
+    : read(levelKey(targetTier, targetLevel));
+}
+
+function exportSaveData() {
+  const entries = [];
+  for (const name of difficulties) {
+    levels[name].forEach(([puzzle], index) => {
+      const save = levelSnapshot(name, index);
+      if (hasBoardProgress(save) || validTime(save?.best)) {
+        entries.push({ tier: name, level: index, puzzle, save });
+      }
+    });
+  }
+  return { format: saveFormat, version: saveVersion, active: { tier, level }, entries };
+}
+
+function downloadSave() {
+  const backup = exportSaveData();
+  if (!backup.entries.length) return notify('当前没有可导出的存档');
+  const blob = new Blob([JSON.stringify(backup)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = 'sudoku-studio-save.json';
+  document.body.append(link);
+  link.click();
+  link.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 15000);
+  dialog.close();
+  notify('存档已导出，可发送到另一台设备');
+}
+
+function parseSaveData(text) {
+  const backup = JSON.parse(text);
+  if (backup?.format !== saveFormat || backup.version !== saveVersion || !Array.isArray(backup.entries)) {
+    throw new Error('请选取从数独练习室导出的存档文件');
+  }
+  if (!backup.entries.length || !validLevel(backup.active?.tier, backup.active?.level)) {
+    throw new Error('存档文件里没有可恢复的进度');
+  }
+
+  const seen = new Set();
+  const entries = backup.entries.map(entry => {
+    const decoded = decodeSaveEntry(entry);
+    if (seen.has(decoded.key)) throw new Error('存档包含重复关卡');
+    seen.add(decoded.key);
+    return decoded;
+  });
+  return { active: backup.active, entries };
+}
+
+function decodeSaveEntry(entry) {
+  if (!validLevel(entry?.tier, entry?.level)) throw new Error('存档包含无法识别的关卡');
+  const { tier: name, level: index, save } = entry;
+  const [puzzle, answer] = levels[name][index];
+  if (entry.puzzle !== puzzle) throw new Error('这份存档对应的题目版本与当前游戏不一致');
+  if (!Array.isArray(save?.values) || save.values.length !== squares.length ||
+      !Array.isArray(save.notes) || save.notes.length !== squares.length ||
+      !validTime(save.elapsed)) {
+    throw new Error('存档内容不完整或已损坏');
+  }
+  return {
+    tier: name,
+    level: index,
+    key: levelKey(name, index),
+    save: {
+      ...startState(save, Array.from(puzzle, Number), Array.from(answer, Number)),
+      selected: Number.isInteger(save.selected) && squares.includes(save.selected) ? save.selected : -1,
+    },
+  };
+}
+
+function sameBoardProgress(a, b) {
+  return JSON.stringify(a.values) === JSON.stringify(b.values) &&
+    JSON.stringify(a.notes) === JSON.stringify(b.notes) &&
+    a.hints === b.hints;
+}
+
+function mergeSave(incoming, existing, useIncoming) {
+  const selectedSave = !hasBoardProgress(existing) || (hasBoardProgress(incoming) && useIncoming)
+    ? incoming : existing;
+  const records = [incoming.best, existing?.best].filter(validTime);
+  return { ...selectedSave, best: records.length ? Math.min(...records) : null };
+}
+
+function applyBackup(backup, useIncoming, announce = true) {
+  const updates = new Map(backup.entries.map(entry => [
+    entry.key,
+    mergeSave(entry.save, levelSnapshot(entry.tier, entry.level), useIncoming),
+  ]));
+  const currentKey = levelKey(tier, level);
+  const running = currentSnapshot();
+  if (!updates.has(currentKey) && (hasBoardProgress(running) || validTime(running.best))) {
+    updates.set(currentKey, running);
+  }
+  updates.set(activeKey, backup.active);
+
+  const previousValues = new Map();
+  try {
+    for (const [key, value] of updates) {
+      const target = gameStorageKey(key);
+      const before = localStorage.getItem(target);
+      localStorage.setItem(target, JSON.stringify(value));
+      previousValues.set(target, before);
+    }
+  } catch {
+    for (const [key, value] of previousValues) {
+      try {
+        if (value === null) localStorage.removeItem(key);
+        else localStorage.setItem(key, value);
+      } catch {
+        // A browser may revoke storage access while the dialog is open.
+      }
+    }
+    notify('导入失败，请检查浏览器是否允许站点保存数据');
+    return false;
+  }
+
+  for (const key of updates.keys()) window.SudokuCloud?.queue(key);
+  clockStart = null;
+  selectLevel(backup.active.tier, backup.active.level, false);
+  if (announce) notify('已导入 ' + backup.entries.length + ' 关存档');
+  return true;
+}
+
+function previewBackup(backup) {
+  const overlaps = backup.entries.filter(entry => {
+    const existing = levelSnapshot(entry.tier, entry.level);
+    return hasBoardProgress(entry.save) && hasBoardProgress(existing) && !sameBoardProgress(entry.save, existing);
+  }).length;
+  const message = ['找到 ' + backup.entries.length + ' 关存档。不同关卡的进度会合并，通关记录会保留更快的成绩。'];
+  if (overlaps) message.push('其中 ' + overlaps + ' 关两边都玩过，选一下继续哪边的棋盘进度。');
+
+  const field = document.createElement('fieldset');
+  field.className = 'save-preference';
+  const caption = document.createElement('legend');
+  caption.textContent = '同一关的棋盘进度';
+  field.append(caption);
+  const input = {};
+  for (const [value, text] of [['local', '继续此设备上的进度'], ['file', '从存档文件里的进度继续']]) {
+    const label = document.createElement('label');
+    const radio = document.createElement('input');
+    radio.type = 'radio';
+    radio.name = 'save-preference';
+    radio.value = value;
+    radio.checked = value === 'local';
+    label.append(radio, text);
+    field.append(label);
+    input[value] = radio;
+  }
+
+  openDialog('导入存档', message, {
+    closeText: '取消',
+    confirmText: '确认导入',
+    action: () => applyBackup(backup, input.file.checked),
+  });
+  if (overlaps) byId('dialog-content').append(field);
+}
+
+saveFileInput.addEventListener('change', async () => {
+  const file = saveFileInput.files[0];
+  saveFileInput.value = '';
+  if (!file) return;
+  try {
+    if (file.size > saveLimit) throw new Error('这份存档文件过大，请检查是否选对文件');
+    previewBackup(parseSaveData(await file.text()));
+  } catch (error) {
+    openDialog('无法导入存档', [error instanceof SyntaxError ? '这份文件无法读取，请选取数独练习室导出的 JSON 存档。' : error.message]);
+  }
+});
+
+byId('manage-saves').addEventListener('click', () => {
+  openDialog('存档管理', [
+    '换设备时，在原设备导出存档文件，再用新设备打开游戏并导入。存档包含填数、笔记、用时和通关纪录。',
+  ]);
+  const actions = document.createElement('div');
+  actions.className = 'save-actions';
+  const download = document.createElement('button');
+  download.type = 'button';
+  download.className = 'button primary';
+  download.textContent = '导出存档';
+  download.addEventListener('click', downloadSave);
+  const upload = document.createElement('button');
+  upload.type = 'button';
+  upload.className = 'button';
+  upload.textContent = '导入存档';
+  upload.addEventListener('click', () => saveFileInput.click());
+  actions.append(download, upload);
+  byId('dialog-content').append(actions);
+});
+
+</script>
+<script>
+window.SUDOKU_SYNC_URL = 'https://sudoku-studio-sync.jiangxiuteng125.workers.dev';
+
+</script>
+<script>
+'use strict';
+
+if (window.SUDOKU_SYNC_URL && location.protocol === 'https:') {
+  (() => {
+    const api = window.SUDOKU_SYNC_URL;
+    const sessionKey = 'sudoku-studio:sync:v1:session';
+    const recordKey = name => prefix + name;
+    const accountButton = byId('cloud-account');
+    const usernamePattern = /^[a-z0-9][a-z0-9_-]{2,23}$/;
+    let session = readSession();
+    let meta = getMeta();
+    let task;
+    let runTimer;
+    let localRestoring = false;
+    let syncError = '';
+    let expired = false;
+
+    function readSession() {
+      try {
+        const stored = JSON.parse(sessionStorage.getItem(sessionKey));
+        return usernamePattern.test(stored?.username ?? '') && /^[a-f0-9]{64}$/.test(stored?.token ?? '') ? stored : null;
+      } catch {
+        return null;
+      }
+    }
+
+    function rememberSession() {
+      try {
+        if (session) sessionStorage.setItem(sessionKey, JSON.stringify(session));
+        else sessionStorage.removeItem(sessionKey);
+      } catch {
+        // The active page can still sync with its in-memory session.
+      }
+    }
+
+    function metaKey() {
+      return 'sudoku-studio:sync:v1:' + session?.username;
+    }
+
+    function getMeta() {
+      const empty = { versions: {}, pending: {}, conflicts: {} };
+      if (!session) return empty;
+      try {
+        return JSON.parse(localStorage.getItem(metaKey())) ?? empty;
+      } catch {
+        return empty;
+      }
+    }
+
+    function storeMeta() {
+      try {
+        localStorage.setItem(metaKey(), JSON.stringify(meta));
+      } catch {
+        // Pending changes stay in memory during this session.
+      }
+    }
+
+    function statusText() {
+      if (expired) return '登录已过期，本机进度已保存';
+      if (Object.keys(meta.conflicts).length) return '有存档冲突，点云存档处理';
+      if (syncError) return '已存到本机，云端同步待重试';
+      if (Object.keys(meta.pending).length) return '本机已保存，正在同步';
+      return '云端已同步';
+    }
+
+    function renderStatus() {
+      accountButton.textContent = session && !expired ? '账号' : '云存档';
+      accountButton.dataset.attention = String(!!session && (expired || !!syncError || Object.keys(meta.conflicts).length > 0));
+      accountButton.setAttribute('aria-label', session ? '云存档，' + statusText() : '云存档，注册或登录');
+      if (session && !storageFailed) byId('save-label').textContent = statusText();
+    }
+
+    async function call(path, { method = 'GET', body, token, keepalive = false } = {}) {
+      const headers = {};
+      if (body) headers['Content-Type'] = 'application/json';
+      if (token) headers.Authorization = 'Bearer ' + token;
+      const response = await fetch(api + path, {
+        method, headers, body, keepalive, cache: 'no-store', credentials: 'omit',
+        signal: AbortSignal.timeout?.(10000),
+      });
+      const result = response.status === 204 ? {} : await response.json();
+      if (!response.ok && response.status !== 409) {
+        throw Object.assign(new Error(result.error || '暂时无法连接云存档'), { code: response.status });
+      }
+      return { ...result, status: response.status };
+    }
+
+    function markPending(key) {
+      if (!session || !saveAccount || localRestoring) return;
+      const name = key.slice(prefix.length);
+      meta.pending[name] = true;
+      storeMeta();
+      renderStatus();
+      schedule(false);
+    }
+
+    function schedule(pull = true, delay = 400) {
+      if (!session || expired) return;
+      clearTimeout(runTimer);
+      runTimer = setTimeout(() => runSync(pull), delay);
+    }
+
+    function cloudRecord(name) {
+      const value = read(recordKey(name));
+      if (!value) return null;
+      if (name === 'active') return value;
+      const [nameTier, number] = name.split(':');
+      return { puzzle: levels[nameTier][Number(number)][0], save: value };
+    }
+
+    function remoteRecord(name, data) {
+      if (name === 'active') return validLevel(data?.tier, data?.level) ? data : null;
+      const [nameTier, number] = name.split(':');
+      const index = Number(number);
+      if (!validLevel(nameTier, index)) return null;
+      try {
+        const entry = decodeSaveEntry({ tier: nameTier, level: index, puzzle: data?.puzzle, save: data?.save });
+        return { puzzle: data.puzzle, save: entry.save };
+      } catch {
+        return null;
+      }
+    }
+
+    function putLocal(name, payload) {
+      const value = name === 'active' ? payload : payload.save;
+      localStorage.setItem(gameStorageKey(recordKey(name)), JSON.stringify(value));
+      if (name === tier + ':' + level) {
+        restoreBoard();
+        render();
+      } else if (name !== 'active') {
+        renderLevels();
+      }
+    }
+
+    function ingest(name, version, source) {
+      if (!source || version <= (meta.versions[name] ?? 0)) return;
+      const remote = remoteRecord(name, JSON.parse(source));
+      if (!remote) return;
+
+      const local = cloudRecord(name);
+      if (!meta.pending[name] || !local) {
+        putLocal(name, remote);
+        delete meta.pending[name];
+        delete meta.conflicts[name];
+      } else if (name !== 'active') {
+        if (!sameBoardProgress(local.save, remote.save) ||
+            local.save.started !== remote.save.started || local.save.notesMode !== remote.save.notesMode) {
+          meta.conflicts[name] = { version, remote };
+          return;
+        }
+        const save = mergeSave(remote.save, local.save, remote.save.elapsed > local.save.elapsed);
+        putLocal(name, { puzzle: remote.puzzle, save });
+        if (JSON.stringify(save) === JSON.stringify(remote.save)) delete meta.pending[name];
+        delete meta.conflicts[name];
+      }
+      meta.versions[name] = version;
+    }
+
+    function runSync(pull = true) {
+      if (!session || expired) return Promise.resolve(false);
+      if (task) return task;
+      const account = session;
+      task = (async () => {
+        try {
+          if (pull) {
+            const cloud = await call('/saves', { token: account.token });
+            if (account !== session) return false;
+            for (const entry of cloud.entries) ingest(entry.key, entry.version, entry.data);
+            storeMeta();
+          }
+
+          for (const name of Object.keys(meta.pending)) {
+            if (account !== session) return false;
+            if (meta.conflicts[name]) continue;
+            const data = cloudRecord(name);
+            if (!data) {
+              delete meta.pending[name];
+              continue;
+            }
+            const version = meta.versions[name] ?? 0;
+            const start = JSON.stringify(data);
+            const saved = await call('/saves', {
+              method: 'PUT', token: account.token,
+              body: JSON.stringify({ key: name, version, data }),
+              keepalive: document.hidden,
+            });
+            if (account !== session) return false;
+            if (saved.status === 409) {
+              if (saved.version) ingest(name, saved.version, saved.data);
+              else delete meta.versions[name];
+            } else {
+              meta.versions[name] = saved.version;
+              if (start === JSON.stringify(cloudRecord(name))) delete meta.pending[name];
+            }
+            storeMeta();
+          }
+          syncError = '';
+          return true;
+        } catch (error) {
+          if (account === session) {
+            expired = error.code === 401;
+            syncError = error.message;
+          }
+          return false;
+        } finally {
+          task = undefined;
+          renderStatus();
+          if (!syncError && Object.keys(meta.pending).some(name => !meta.conflicts[name])) schedule(false);
+        }
+      })();
+      return task;
+    }
+
+    function restoreAccountGame() {
+      localRestoring = true;
+      try {
+        clockStart = null;
+        restoreGame();
+      } finally {
+        localRestoring = false;
+      }
+    }
+
+    async function openSession(nextSession, backup) {
+      const previousAccount = saveAccount;
+      if (hasBoardProgress(current) || validTime(current.best)) save();
+      if (task) await task;
+      session = nextSession;
+      saveAccount = session.username;
+      syncError = '';
+      expired = false;
+      meta = getMeta();
+      rememberSession();
+
+      const prior = read(activeKey);
+      if (validLevel(prior?.tier, prior?.level)) restoreAccountGame();
+      else {
+        localRestoring = true;
+        selectLevel('easy', 0, false);
+        localRestoring = false;
+      }
+
+      const pulled = await runSync();
+      if (pulled) {
+        if (backup) applyBackup(backup, false, false);
+        else restoreAccountGame();
+        await runSync(false);
+      }
+      renderStatus();
+      if (previousAccount !== saveAccount) {
+        notify(pulled ? '已登录，云存档可以跨设备继续' : '已登录，云存档连接稍后重试');
+      }
+    }
+
+    async function signOut() {
+      if (hasBoardProgress(current) || validTime(current.best)) save();
+      await runSync(false);
+      try {
+        await call('/logout', { method: 'POST', token: session.token });
+      } catch {
+        // The local session is still removed when the network is unavailable.
+      }
+      clearTimeout(runTimer);
+      session = null;
+      saveAccount = '';
+      meta = getMeta();
+      syncError = '';
+      expired = false;
+      rememberSession();
+      dialog.close();
+      restoreAccountGame();
+      renderStatus();
+      notify('已退出账号');
+    }
+
+    function resolveConflict(useCloud) {
+      for (const [name, conflict] of Object.entries(meta.conflicts)) {
+        const local = cloudRecord(name);
+        const remote = conflict.remote;
+        const save = mergeSave(remote.save, local?.save, useCloud);
+        putLocal(name, { puzzle: remote.puzzle, save });
+        meta.versions[name] = conflict.version;
+        delete meta.conflicts[name];
+        if (JSON.stringify(save) === JSON.stringify(remote.save)) delete meta.pending[name];
+        else meta.pending[name] = true;
+      }
+      storeMeta();
+      renderStatus();
+      schedule(false, 0);
+    }
+
+    function actionButton(text, action, primary = false) {
+      const button = document.createElement('button');
+      button.type = 'button';
+      button.className = primary ? 'button primary' : 'button';
+      button.textContent = text;
+      button.addEventListener('click', action);
+      return button;
+    }
+
+    function openAccount() {
+      if (!session || expired) {
+        showAuth(false);
+        return;
+      }
+      const conflicts = Object.keys(meta.conflicts).length;
+      const text = ['已登录 ' + session.username + '。手机和电脑登录同一账号即可继续。', statusText()];
+      if (conflicts) text.push(conflicts + ' 关在两台设备都有新进度。请选择要继续的棋盘，最快通关纪录会合并保留。');
+      openDialog('云存档', text);
+      const actions = document.createElement('div');
+      actions.className = 'save-actions';
+      if (conflicts) {
+        actions.append(
+          actionButton('使用这台设备的进度', () => { resolveConflict(false); dialog.close(); }, true),
+          actionButton('使用云端进度', () => { resolveConflict(true); dialog.close(); }),
+        );
+      } else {
+        actions.append(actionButton('立即同步', async () => {
+          const updated = await runSync();
+          dialog.close();
+          notify(updated ? '已检查云存档' : statusText());
+        }, true));
+      }
+      actions.append(actionButton('退出账号', signOut));
+      byId('dialog-content').append(actions);
+    }
+
+    async function deriveCredential(username, password) {
+      const encode = new TextEncoder();
+      const key = await crypto.subtle.importKey('raw', encode.encode(password), 'PBKDF2', false, ['deriveBits']);
+      const salt = encode.encode('sudoku-studio:password:v1:' + location.origin + ':' + username);
+      const derived = await crypto.subtle.deriveBits({ name: 'PBKDF2', hash: 'SHA-256', salt, iterations: 600000 }, key, 256);
+      return Array.from(new Uint8Array(derived), byte => byte.toString(16).padStart(2, '0')).join('');
+    }
+
+    function inputFor(labelText, attributes) {
+      const label = document.createElement('label');
+      label.textContent = labelText;
+      const input = document.createElement('input');
+      for (const [name, value] of Object.entries(attributes)) input.setAttribute(name, value);
+      label.append(input);
+      return { label, input };
+    }
+
+    function showAuth(register) {
+      openDialog(register ? '注册数独账号' : '登录数独账号', [
+        register ? '设置用户名和至少 15 个字符的密码，可用一句容易记住的短句。'
+          : '在手机和电脑上登录同一个数独账号，进度会自动同步。',
+      ], { closeText: '取消' });
+
+      const form = document.createElement('form');
+      form.className = 'auth-form';
+      const name = inputFor('用户名', {
+        name: 'username', type: 'text', autocomplete: 'username', required: '', maxlength: '24',
+        autocapitalize: 'none', spellcheck: 'false', placeholder: '3–24 位字母、数字、下划线或短横线',
+      });
+      name.input.value = session?.username ?? '';
+      const password = inputFor('密码', {
+        name: 'password', type: 'password', autocomplete: register ? 'new-password' : 'current-password',
+        required: '', maxlength: '128', ...(register ? { minlength: '15' } : {}),
+      });
+      form.append(name.label, password.label);
+      const repeat = inputFor('再次输入密码', {
+        name: 'confirm', type: 'password', autocomplete: 'new-password', required: '', maxlength: '128',
+      });
+      if (register) form.append(repeat.label);
+
+      const migrate = inputFor('把本机游客存档合并到这个账号', { name: 'migrate', type: 'checkbox' });
+      migrate.label.prepend(migrate.input);
+      migrate.label.className = 'auth-migrate';
+      if (!saveAccount && exportSaveData().entries.length) form.append(migrate.label);
+
+      const warning = document.createElement('p');
+      warning.className = 'auth-error';
+      warning.setAttribute('role', 'status');
+      form.append(warning);
+
+      const buttons = document.createElement('div');
+      buttons.className = 'auth-buttons';
+      const submit = document.createElement('button');
+      submit.type = 'submit';
+      submit.className = 'button primary';
+      submit.textContent = register ? '注册并登录' : '登录';
+      const toggle = actionButton(register ? '已有账号，去登录' : '注册新账号', () => showAuth(!register));
+      buttons.append(submit, toggle);
+      form.append(buttons);
+
+      form.addEventListener('submit', async event => {
+        event.preventDefault();
+        const username = name.input.value.trim().toLowerCase();
+        if (!usernamePattern.test(username)) {
+          warning.textContent = '用户名须以字母或数字开头，长度为 3–24 位';
+          return;
+        }
+        if (register && password.input.value !== repeat.input.value) {
+          warning.textContent = '两次输入的密码不一致';
+          return;
+        }
+
+        submit.disabled = true;
+        toggle.disabled = true;
+        warning.textContent = '';
+        try {
+          const credential = await deriveCredential(username, password.input.value);
+          const result = await call(register ? '/register' : '/login', {
+            method: 'POST', body: JSON.stringify({ username, credential }),
+          });
+          if (!result.token) throw new Error(result.error || '暂时无法登录');
+          if (!dialog.open || !form.isConnected) return;
+          let backup;
+          if (!saveAccount && migrate.input.checked) {
+            const local = exportSaveData();
+            if (local.entries.length) backup = parseSaveData(JSON.stringify(local));
+          }
+          form.reset();
+          dialog.close();
+          await openSession({ username: result.username, token: result.token }, backup);
+        } catch (error) {
+          warning.textContent = error.code || error.name === 'Error' ? error.message : '网络连接异常，请稍后再试';
+        } finally {
+          submit.disabled = false;
+          toggle.disabled = false;
+        }
+      });
+
+      byId('dialog-content').append(form);
+      name.input.focus();
+    }
+
+    window.SudokuCloud = { queue: markPending };
+    accountButton.hidden = false;
+    accountButton.addEventListener('click', openAccount);
+    document.addEventListener('visibilitychange', () => schedule(!document.hidden, 0));
+    window.addEventListener('focus', () => schedule(true, 0));
+    window.addEventListener('online', () => schedule(true, 0));
+    window.addEventListener('pagehide', () => { if (session && !expired) runSync(false); });
+    setInterval(() => { if (!document.hidden) schedule(true, 0); }, 20000);
+    if (session) openSession(session);
+    else renderStatus();
+  })();
+}
 
 </script>
 </body>
