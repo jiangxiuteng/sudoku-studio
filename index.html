@@ -25,7 +25,7 @@ SOFTWARE.
 <html lang="zh-CN">
 <head>
   <meta charset="utf-8">
-  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-C4HTcrapgaJ+M1ndJf2jNG9ECDTMJCd7oYqIRMFXldU=' 'sha256-vsm13rjsjqZHKtyfCuxY2KwtwBMm4eVbZC8hBitx1Cs=' 'sha256-ISsSawPClh8fYRUlU41n9kQuZc63mIxfoswAIT+Lm8k=' 'sha256-tIfOXZ2K2gs7jffBnJgrp1OaHTwMxTeogZOMYxj4/Fg=' 'sha256-imNmN2F/diRCkWI4DK/tjd9xmjMDy97NR2fGHSH/gI0='; style-src 'unsafe-inline'; img-src data:; connect-src https://sudoku-studio-sync.jiangxiuteng125.workers.dev; base-uri 'none'; form-action 'none'">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-C4HTcrapgaJ+M1ndJf2jNG9ECDTMJCd7oYqIRMFXldU=' 'sha256-vsm13rjsjqZHKtyfCuxY2KwtwBMm4eVbZC8hBitx1Cs=' 'sha256-ISsSawPClh8fYRUlU41n9kQuZc63mIxfoswAIT+Lm8k=' 'sha256-tIfOXZ2K2gs7jffBnJgrp1OaHTwMxTeogZOMYxj4/Fg=' 'sha256-GbpMDygFvmJ/dntFd6SGOXNTHWh1InYcmKjdESu2JGs='; style-src 'unsafe-inline'; img-src data:; connect-src https://sudoku-studio-sync.jiangxiuteng125.workers.dev; base-uri 'none'; form-action 'none'">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="theme-color" content="#f7f7fc">
   <meta name="description" content="免费中文数独，四档难度、48 个关卡，支持候选数字笔记与自动存档。">
@@ -1652,7 +1652,7 @@ if (window.SUDOKU_SYNC_URL && location.protocol === 'https:') {
 
     function showAuth(register) {
       openDialog(register ? '注册数独账号' : '登录数独账号', [
-        register ? '设置用户名和至少 15 个字符的密码，可用一句容易记住的短句。'
+        register ? '设置用户名和密码。'
           : '在手机和电脑上登录同一个数独账号，进度会自动同步。',
       ], { closeText: '取消' });
 
@@ -1665,11 +1665,11 @@ if (window.SUDOKU_SYNC_URL && location.protocol === 'https:') {
       name.input.value = session?.username ?? '';
       const password = inputFor('密码', {
         name: 'password', type: 'password', autocomplete: register ? 'new-password' : 'current-password',
-        required: '', maxlength: '128', ...(register ? { minlength: '15' } : {}),
+        required: '',
       });
       form.append(name.label, password.label);
       const repeat = inputFor('再次输入密码', {
-        name: 'confirm', type: 'password', autocomplete: 'new-password', required: '', maxlength: '128',
+        name: 'confirm', type: 'password', autocomplete: 'new-password', required: '',
       });
       if (register) form.append(repeat.label);
 
