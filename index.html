@@ -25,7 +25,7 @@ SOFTWARE.
 <html lang="zh-CN">
 <head>
   <meta charset="utf-8">
-  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-C4HTcrapgaJ+M1ndJf2jNG9ECDTMJCd7oYqIRMFXldU=' 'sha256-vsm13rjsjqZHKtyfCuxY2KwtwBMm4eVbZC8hBitx1Cs=' 'sha256-ISsSawPClh8fYRUlU41n9kQuZc63mIxfoswAIT+Lm8k=' 'sha256-tIfOXZ2K2gs7jffBnJgrp1OaHTwMxTeogZOMYxj4/Fg=' 'sha256-GbpMDygFvmJ/dntFd6SGOXNTHWh1InYcmKjdESu2JGs='; style-src 'unsafe-inline'; img-src data:; connect-src https://sudoku-studio-sync.jiangxiuteng125.workers.dev; base-uri 'none'; form-action 'none'">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-C4HTcrapgaJ+M1ndJf2jNG9ECDTMJCd7oYqIRMFXldU=' 'sha256-vsm13rjsjqZHKtyfCuxY2KwtwBMm4eVbZC8hBitx1Cs=' 'sha256-ISsSawPClh8fYRUlU41n9kQuZc63mIxfoswAIT+Lm8k=' 'sha256-tIfOXZ2K2gs7jffBnJgrp1OaHTwMxTeogZOMYxj4/Fg=' 'sha256-0FIhac8pCG/AKHlL0b55EtghstKPB7O5FSrRohn6tpE='; style-src 'unsafe-inline'; img-src data:; connect-src https://sudoku-studio-sync.jiangxiuteng125.workers.dev; base-uri 'none'; form-action 'none'">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="theme-color" content="#f7f7fc">
   <meta name="description" content="免费中文数独，四档难度、48 个关卡，支持候选数字笔记与自动存档。">
@@ -203,6 +203,7 @@ dialog::backdrop { background: #211a3b72; }
 .auth-form .auth-migrate { display: flex; gap: 8px; align-items: center; font-weight: 500; }
 .auth-form .auth-migrate input { width: auto; accent-color: var(--accent); }
 .auth-form .auth-error { min-height: 1.45em; color: #a12549; font-size: .84rem; }
+.auth-form .auth-error[data-pending] { color: #51536a; }
 .auth-form .auth-buttons { display: flex; flex-wrap: wrap; gap: 8px; }
 .dialog-actions { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 8px; margin-top: 20px; }
 .primary, .primary:hover { background: #6546cd; color: #fff; border-color: #6546cd; }
@@ -1658,6 +1659,7 @@ if (window.SUDOKU_SYNC_URL && location.protocol === 'https:') {
 
       const form = document.createElement('form');
       form.className = 'auth-form';
+      form.noValidate = true;
       const name = inputFor('用户名', {
         name: 'username', type: 'text', autocomplete: 'username', required: '', maxlength: '24',
         autocapitalize: 'none', spellcheck: 'false', placeholder: '3–24 位字母、数字、下划线或短横线',
@@ -1688,7 +1690,8 @@ if (window.SUDOKU_SYNC_URL && location.protocol === 'https:') {
       const submit = document.createElement('button');
       submit.type = 'submit';
       submit.className = 'button primary';
-      submit.textContent = register ? '注册并登录' : '登录';
+      const submitText = register ? '注册并登录' : '登录';
+      submit.textContent = submitText;
       const toggle = actionButton(register ? '已有账号，去登录' : '注册新账号', () => showAuth(!register));
       buttons.append(submit, toggle);
       form.append(buttons);
@@ -1697,35 +1700,50 @@ if (window.SUDOKU_SYNC_URL && location.protocol === 'https:') {
         event.preventDefault();
         const username = name.input.value.trim().toLowerCase();
         if (!usernamePattern.test(username)) {
-          warning.textContent = '用户名须以字母或数字开头，长度为 3–24 位';
+          warning.textContent = username
+            ? '用户名需为 3–24 位英文字母、数字、下划线或短横线，首位须为字母或数字'
+            : '请填写用户名';
+          name.input.focus();
+          return;
+        }
+        if (!password.input.value) {
+          warning.textContent = '请填写密码';
+          password.input.focus();
           return;
         }
         if (register && password.input.value !== repeat.input.value) {
-          warning.textContent = '两次输入的密码不一致';
+          warning.textContent = repeat.input.value ? '两次输入的密码不一致' : '请再次输入密码';
+          repeat.input.focus();
           return;
         }
 
         submit.disabled = true;
         toggle.disabled = true;
-        warning.textContent = '';
+        submit.textContent = register ? '正在注册…' : '正在登录…';
+        warning.dataset.pending = '';
+        warning.textContent = submit.textContent;
         try {
           const credential = await deriveCredential(username, password.input.value);
           const result = await call(register ? '/register' : '/login', {
             method: 'POST', body: JSON.stringify({ username, credential }),
           });
-          if (!result.token) throw new Error(result.error || '暂时无法登录');
+          if (!result.token) throw new Error(result.error || (register ? '暂时无法注册' : '暂时无法登录'));
           if (!dialog.open || !form.isConnected) return;
           let backup;
           if (!saveAccount && migrate.input.checked) {
             const local = exportSaveData();
             if (local.entries.length) backup = parseSaveData(JSON.stringify(local));
           }
-          form.reset();
-          dialog.close();
           await openSession({ username: result.username, token: result.token }, backup);
+          form.reset();
+          if (form.isConnected) dialog.close();
         } catch (error) {
-          warning.textContent = error.code || error.name === 'Error' ? error.message : '网络连接异常，请稍后再试';
+          warning.textContent = error.name === 'TimeoutError' || error.name === 'AbortError'
+            ? '连接云存档超时，请重试'
+            : error.code || error.name === 'Error' ? error.message : '无法连接云存档，请检查网络后重试';
         } finally {
+          delete warning.dataset.pending;
+          submit.textContent = submitText;
           submit.disabled = false;
           toggle.disabled = false;
         }
